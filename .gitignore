@@ -4,3 +4,4 @@ build/*
 *.dSYM
 *.dll
 *.dylib
+.cache/*

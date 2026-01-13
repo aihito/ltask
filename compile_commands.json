@@ -1,0 +1,240 @@
+[
+  {
+    "arguments": [
+      "/usr/sbin/cc",
+      "-c",
+      "-g",
+      "-Wall",
+      "--shared",
+      "-fPIC",
+      "-Isrc",
+      "-o",
+      "ltask.so",
+      "src/ltask.c"
+    ],
+    "directory": "/home/game/open-source/game-server/ltask",
+    "file": "/home/game/open-source/game-server/ltask/src/ltask.c",
+    "output": "/home/game/open-source/game-server/ltask/ltask.so"
+  },
+  {
+    "arguments": [
+      "/usr/sbin/cc",
+      "-c",
+      "-g",
+      "-Wall",
+      "--shared",
+      "-fPIC",
+      "-Isrc",
+      "-o",
+      "ltask.so",
+      "src/mqueue.c"
+    ],
+    "directory": "/home/game/open-source/game-server/ltask",
+    "file": "/home/game/open-source/game-server/ltask/src/mqueue.c",
+    "output": "/home/game/open-source/game-server/ltask/ltask.so"
+  },
+  {
+    "arguments": [
+      "/usr/sbin/cc",
+      "-c",
+      "-g",
+      "-Wall",
+      "--shared",
+      "-fPIC",
+      "-Isrc",
+      "-o",
+      "ltask.so",
+      "src/queue.c"
+    ],
+    "directory": "/home/game/open-source/game-server/ltask",
+    "file": "/home/game/open-source/game-server/ltask/src/queue.c",
+    "output": "/home/game/open-source/game-server/ltask/ltask.so"
+  },
+  {
+    "arguments": [
+      "/usr/sbin/cc",
+      "-c",
+      "-g",
+      "-Wall",
+      "--shared",
+      "-fPIC",
+      "-Isrc",
+      "-o",
+      "ltask.so",
+      "src/sysinfo.c"
+    ],
+    "directory": "/home/game/open-source/game-server/ltask",
+    "file": "/home/game/open-source/game-server/ltask/src/sysinfo.c",
+    "output": "/home/game/open-source/game-server/ltask/ltask.so"
+  },
+  {
+    "arguments": [
+      "/usr/sbin/cc",
+      "-c",
+      "-g",
+      "-Wall",
+      "--shared",
+      "-fPIC",
+      "-Isrc",
+      "-o",
+      "ltask.so",
+      "src/service.c"
+    ],
+    "directory": "/home/game/open-source/game-server/ltask",
+    "file": "/home/game/open-source/game-server/ltask/src/service.c",
+    "output": "/home/game/open-source/game-server/ltask/ltask.so"
+  },
+  {
+    "arguments": [
+      "/usr/sbin/cc",
+      "-c",
+      "-g",
+      "-Wall",
+      "--shared",
+      "-fPIC",
+      "-Isrc",
+      "-o",
+      "ltask.so",
+      "src/config.c"
+    ],
+    "directory": "/home/game/open-source/game-server/ltask",
+    "file": "/home/game/open-source/game-server/ltask/src/config.c",
+    "output": "/home/game/open-source/game-server/ltask/ltask.so"
+  },
+  {
+    "arguments": [
+      "/usr/sbin/cc",
+      "-c",
+      "-g",
+      "-Wall",
+      "--shared",
+      "-fPIC",
+      "-Isrc",
+      "-o",
+      "ltask.so",
+      "src/lua-seri.c"
+    ],
+    "directory": "/home/game/open-source/game-server/ltask",
+    "file": "/home/game/open-source/game-server/ltask/src/lua-seri.c",
+    "output": "/home/game/open-source/game-server/ltask/ltask.so"
+  },
+  {
+    "arguments": [
+      "/usr/sbin/cc",
+      "-c",
+      "-g",
+      "-Wall",
+      "--shared",
+      "-fPIC",
+      "-Isrc",
+      "-o",
+      "ltask.so",
+      "src/message.c"
+    ],
+    "directory": "/home/game/open-source/game-server/ltask",
+    "file": "/home/game/open-source/game-server/ltask/src/message.c",
+    "output": "/home/game/open-source/game-server/ltask/ltask.so"
+  },
+  {
+    "arguments": [
+      "/usr/sbin/cc",
+      "-c",
+      "-g",
+      "-Wall",
+      "--shared",
+      "-fPIC",
+      "-Isrc",
+      "-o",
+      "ltask.so",
+      "src/systime.c"
+    ],
+    "directory": "/home/game/open-source/game-server/ltask",
+    "file": "/home/game/open-source/game-server/ltask/src/systime.c",
+    "output": "/home/game/open-source/game-server/ltask/ltask.so"
+  },
+  {
+    "arguments": [
+      "/usr/sbin/cc",
+      "-c",
+      "-g",
+      "-Wall",
+      "--shared",
+      "-fPIC",
+      "-Isrc",
+      "-o",
+      "ltask.so",
+      "src/timer.c"
+    ],
+    "directory": "/home/game/open-source/game-server/ltask",
+    "file": "/home/game/open-source/game-server/ltask/src/timer.c",
+    "output": "/home/game/open-source/game-server/ltask/ltask.so"
+  },
+  {
+    "arguments": [
+      "/usr/sbin/cc",
+      "-c",
+      "-g",
+      "-Wall",
+      "--shared",
+      "-fPIC",
+      "-Isrc",
+      "-o",
+      "ltask.so",
+      "src/sysapi.c"
+    ],
+    "directory": "/home/game/open-source/game-server/ltask",
+    "file": "/home/game/open-source/game-server/ltask/src/sysapi.c",
+    "output": "/home/game/open-source/game-server/ltask/ltask.so"
+  },
+  {
+    "arguments": [
+      "/usr/sbin/cc",
+      "-c",
+      "-g",
+      "-Wall",
+      "--shared",
+      "-fPIC",
+      "-Isrc",
+      "-o",
+      "ltask.so",
+      "src/logqueue.c"
+    ],
+    "directory": "/home/game/open-source/game-server/ltask",
+    "file": "/home/game/open-source/game-server/ltask/src/logqueue.c",
+    "output": "/home/game/open-source/game-server/ltask/ltask.so"
+  },
+  {
+    "arguments": [
+      "/usr/sbin/cc",
+      "-c",
+      "-g",
+      "-Wall",
+      "--shared",
+      "-fPIC",
+      "-Isrc",
+      "-o",
+      "ltask.so",
+      "src/debuglog.c"
+    ],
+    "directory": "/home/game/open-source/game-server/ltask",
+    "file": "/home/game/open-source/game-server/ltask/src/debuglog.c",
+    "output": "/home/game/open-source/game-server/ltask/ltask.so"
+  },
+  {
+    "arguments": [
+      "/usr/sbin/cc",
+      "-c",
+      "-g",
+      "-Wall",
+      "--shared",
+      "-fPIC",
+      "-Isrc",
+      "-o",
+      "ltask.so",
+      "src/threadsig.c"
+    ],
+    "directory": "/home/game/open-source/game-server/ltask",
+    "file": "/home/game/open-source/game-server/ltask/src/threadsig.c",
+    "output": "/home/game/open-source/game-server/ltask/ltask.so"
+  }
+]
