@@ -683,7 +683,7 @@ function ltask.parallel(task)
 		if ret_tail == n and ret_head == ret_tail then
 			return
 		end
-		while ret_head == ret_tail do
+		while ret_head == ret_tail do -- 当结果集为空时，等待结果
 			token = {}
 			ltask.wait(token)
 		end

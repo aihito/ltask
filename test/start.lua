@@ -1,5 +1,8 @@
 local boot = require "ltask.bootstrap"
 
+-- 保存原始的 print 函数
+local original_print = _G.print
+
 local function searchpath(name)
 	return assert(package.searchpath(name, "lualib/?.lua"))
 end
@@ -41,7 +44,11 @@ return loadfile(filename)
 		}),
 	}
 
-	boot.init_socket()
+	-- original_print()
+	-- original_print(root_config.initfunc)
+	-- original_print()
+	-- do return end
+
 	local bootstrap = dofile(searchpath "bootstrap")
 	local ctx = bootstrap.start {
 		core = config.core or {},
