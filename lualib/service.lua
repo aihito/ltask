@@ -719,6 +719,7 @@ function ltask.dispatch(handler)
 			if type(v) == "function" then
 				assert(service[k] == nil)
 				service[k] = v
+				ltask.log.info("register handler: ", k)
 			end
 		end
 	end

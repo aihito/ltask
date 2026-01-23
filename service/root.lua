@@ -122,6 +122,7 @@ local function spawn(t)
 		error("send MESSAGE_SCHEDULE_NEW failed.")
 	end
 	anonymous_services[address] = true
+	print(string.format("spawn service name: %16s address: %d path: %s chunkname: %s", t.name, address, t.path, config.service_chunkname))
 	assert(root.init_service(address, t.name, config.service_source, config.service_chunkname, t.worker_id))
 	ltask.syscall(address, "init", {
 		initfunc = t.initfunc or config.initfunc,

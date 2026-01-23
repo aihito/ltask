@@ -24,6 +24,8 @@ end
 
 return function (config)
 	local servicepath = searchpath "service"
+	original_print(servicepath)
+	original_print()
 	local root_config = {
 		bootstrap = config.bootstrap,
 		service_source = readall(servicepath),
@@ -44,9 +46,15 @@ return loadfile(filename)
 		}),
 	}
 
+	original_print()
+	original_print(root_config.initfunc)
+	original_print()
+	original_print(root_config.service_chunkname)
 	-- original_print()
-	-- original_print(root_config.initfunc)
-	-- original_print()
+	-- for k, v in pairs(root_config) do
+	-- 	original_print(k, v)
+	-- end
+	original_print()
 	-- do return end
 
 	local bootstrap = dofile(searchpath "bootstrap")
