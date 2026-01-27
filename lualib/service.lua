@@ -14,6 +14,7 @@ local RECEIPT_BLOCK <const> = 3
 local SESSION_SEND_MESSAGE <const> = 0
 
 local ltask = require "ltask"
+local utils = require "utils"
 
 local CURRENT_SERVICE <const> = ltask.self()
 local CURRENT_SERVICE_LABEL <const> = ltask.label()
@@ -834,6 +835,7 @@ local function sys_service_init(t)
 	_G.require = yieldable_require
 	local initfunc = assert(load(t.initfunc))
 	local func = assert(initfunc(t.name, t.path))
+	print(string.format("dest service %s args: %s", t.name, utils.format_table_data(t.args)))
 	local handler = func(table.unpack(t.args))
 	ltask.dispatch(handler)
 	if service == nil then

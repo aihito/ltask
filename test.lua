@@ -20,6 +20,7 @@ start {
         },
         {
             name = "bootstrap",
+            args = {123},
         },
     },
 }

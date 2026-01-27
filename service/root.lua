@@ -1,5 +1,6 @@
 local ltask = require "ltask"
 local root = require "ltask.root"
+local utils = require "utils"
 
 local config = ...
 
@@ -124,11 +125,14 @@ local function spawn(t)
 	anonymous_services[address] = true
 	print(string.format("spawn service name: %16s address: %d path: %s chunkname: %s", t.name, address, t.path, config.service_chunkname))
 	assert(root.init_service(address, t.name, config.service_source, config.service_chunkname, t.worker_id))
+	local args = t.args or {}
+	print(string.format("service %s args: %s", t.name, utils.format_table_data(args)))
+	
 	ltask.syscall(address, "init", {
 		initfunc = t.initfunc or config.initfunc,
 		name = t.name,
 		path = t.path,
-		args = t.args or {},
+		args = args,
 	})
 	return address
 end
