@@ -720,7 +720,7 @@ function ltask.dispatch(handler)
 			if type(v) == "function" then
 				assert(service[k] == nil)
 				service[k] = v
-				ltask.log.info("register handler: ", k)
+				ltask.log.info(string.format("[%s] [%d] register handler: %s", CURRENT_SERVICE_LABEL, CURRENT_SERVICE, k))
 			end
 		end
 	end
@@ -834,8 +834,8 @@ local function sys_service_init(t)
 	-- The first system message
 	_G.require = yieldable_require
 	local initfunc = assert(load(t.initfunc))
-	local func = assert(initfunc(t.name, t.path))
-	print(string.format("dest service %s args: %s", t.name, utils.format_table_data(t.args)))
+	local func = assert(initfunc(t.name, t.path)) -- return chunk function
+	print(string.format("dest service [%s] args: %s", t.name, utils.format_table_data(t.args)))
 	local handler = func(table.unpack(t.args))
 	ltask.dispatch(handler)
 	if service == nil then
