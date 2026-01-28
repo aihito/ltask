@@ -1,0 +1,3 @@
+[submodule "3rd/lrust"]
+	path = 3rd/lrust
+	url = https://github.com/hsoul/lrust.git
