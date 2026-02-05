@@ -5,3 +5,4 @@ build/*
 *.dll
 *.dylib
 .cache/*
+ext_lualib/*

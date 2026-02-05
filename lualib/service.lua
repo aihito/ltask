@@ -19,6 +19,68 @@ local utils = require "utils"
 local CURRENT_SERVICE <const> = ltask.self()
 local CURRENT_SERVICE_LABEL <const> = ltask.label()
 
+-- Message type extension:
+-- - If msg_type < 0x10000: msg_type is the main type, sub_type = 0
+-- - If msg_type >= 0x10000: high 16 bits = main type, low 16 bits = sub type
+local COMPOSITE_TYPE_BASE <const> = 0x10000
+
+local function split_message_type(msg_type)
+	if msg_type == nil then
+		return nil, 0
+	end
+	if msg_type >= COMPOSITE_TYPE_BASE then
+		local main_type = (msg_type >> 16) & 0xffff
+		local sub_type = msg_type & 0xffff
+		return main_type, sub_type
+	end
+	return msg_type, 0
+end
+
+function ltask.compose_msg_type(main_type, sub_type)
+	main_type = assert(math.tointeger(main_type), "main_type must be integer")
+	sub_type = assert(math.tointeger(sub_type or 0), "sub_type must be integer")
+	assert(main_type >= 0 and main_type <= 0xffff, "main_type must be 0..65535")
+	assert(sub_type >= 0 and sub_type <= 0xffff, "sub_type must be 0..65535")
+	return (main_type << 16) | sub_type
+end
+
+-- Protocol decoders for non-seri payloads
+-- protocol_decoders[main_type][sub_type] = decoder(msg, sz, main_type, sub_type)
+local protocol_decoders = {}
+
+function ltask.register_protocol(main_type, sub_type, decoder)
+	assert(type(main_type) == "number", "main_type must be number")
+	assert(type(sub_type) == "number", "sub_type must be number")
+	assert(type(decoder) == "function", "decoder must be function")
+	local mt = protocol_decoders[main_type]
+	if mt == nil then
+		mt = {}
+		protocol_decoders[main_type] = mt
+	end
+	mt[sub_type] = decoder
+end
+
+local function decode_by_protocol(main_type, sub_type, msg, sz)
+	if msg == nil then
+		return nil
+	end
+	local mt = protocol_decoders[main_type]
+	local decoder = mt and mt[sub_type]
+	if decoder then
+		return decoder(msg, sz, main_type, sub_type)
+	end
+	-- default: seri
+	if sub_type == 0 then
+		return ltask.unpack_remove(msg, sz)
+	end
+	-- no decoder: return raw bytes as string and free buffer (requires ltask.bytes_remove)
+	if type(ltask.bytes_remove) == "function" then
+		return ltask.bytes_remove(msg, sz)
+	end
+	ltask.remove(msg, sz)
+	error(string.format("No protocol decoder for main=%d sub=%d", main_type, sub_type))
+end
+
 ltask.log = {}
 for _, level in ipairs {"info","error"} do
 	ltask.log[level] = function (...)
@@ -448,6 +510,33 @@ do	-- async object
 			rethrow_error(2, err)
 		end
 		self._wakeup = nil
+	end
+end
+
+-- Wait for external async request result (from Rust/C extensions)
+-- Usage: local result = ltask.async_wait(session, err)
+function ltask.async_wait(session, err)
+	-- session: int64 (lua number integer) OR false/nil/0 for immediate failure
+	-- err: optional error message if session is false/nil/0
+	if session == false or session == nil or session == 0 then
+		rethrow_error(2, err or "async request failed")
+	end
+	
+	-- Register current coroutine to wait for this session
+	session_coroutine_suspend_lookup[session] = running_thread
+	
+	-- Yield and wait for response
+	local msg_type, ret_session, msg, sz = yield_session()
+	-- ret_session should equal session (registered by session_coroutine_suspend_lookup)
+	-- Keep it for debugging if needed.
+	local main_type, sub_type = split_message_type(msg_type)
+	
+	-- Handle response
+	if main_type == MESSAGE_RESPONSE then
+		return decode_by_protocol(main_type, sub_type, msg, sz)
+	else -- MESSAGE_ERROR
+		local errobj = decode_by_protocol(main_type, sub_type, msg, sz)
+		rethrow_error(2, errobj)
 	end
 end
 
