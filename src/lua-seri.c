@@ -924,6 +924,19 @@ luaseri_remove(lua_State *L) {
 	return 0;
 }
 
+/* Copy buffer to Lua string and free buffer. For raw (non-seri) message payloads. */
+int
+luaseri_bytes_remove(lua_State *L) {
+	if (lua_isnoneornil(L, 1))
+		return 0;
+	luaL_checktype(L, 1, LUA_TLIGHTUSERDATA);
+	void *data = lua_touserdata(L, 1);
+	size_t sz = (size_t)luaL_checkinteger(L, 2);
+	lua_pushlstring(L, (const char *)data, sz);
+	free(data);
+	return 1;
+}
+
 #ifdef TEST_SERI
 
 LUAMOD_API int

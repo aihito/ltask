@@ -43,27 +43,28 @@ lua_typeid[LUA_NUMTYPES] = {
 	TYPEID_THREAD,
 };
 
+/* Per-service Lua allocator stats and limit; used by service_alloc and service_memlimit/mem_count. */
 struct memory_stat {
-	size_t count[TYPEID_COUNT];
-	size_t mem;
-	size_t limit;
+	size_t count[TYPEID_COUNT]; /* object count by type (string, table, etc.) */
+	size_t mem;                 /* total bytes allocated */
+	size_t limit;               /* max bytes allowed (0 = no limit) */
 };
 
 struct service {
-	lua_State *L;
-	lua_State *rL;
-	struct queue *msg;
-	struct message *out;
-	struct message *bounce;
-	int status;
-	int receipt;
-	int binding_thread;
-	int sockevent_id;
-	service_id id;
-	char label[32];
-	struct memory_stat stat;
-	uint64_t cpucost;
-	uint64_t clock;
+	lua_State *L;           /* main Lua VM for this service; created in service_init, closed on free */
+	lua_State *rL;          /* running coroutine (lua_newthread(L)); used by service_resume and backtrace */
+	struct queue *msg;      /* incoming message queue; push via service_push_message, pop via service_pop_message */
+	struct message *out;    /* single outgoing message; set by service_send_message, consumed by service_message_out */
+	struct message *bounce; /* receipt/sync message for root (e.g. schedule NEW/DEL response); see service_write/read_receipt */
+	int status;             /* SERVICE_STATUS_* (UNINITIALIZED, IDLE, SCHEDULE, RUNNING, DONE, DEAD, MAINTHREAD) */
+	int receipt;            /* MESSAGE_RECEIPT_* for root/scheduler sync (NONE, DONE, ERROR, BLOCK, RESPONSE) */
+	int binding_thread;     /* worker thread index this service is bound to; -1 if not bound */
+	int sockevent_id;       /* index into ltask event[] for socket; -1 if not a sockevent service */
+	service_id id;          /* unique service id (e.g. SERVICE_ID_ROOT, or allocated) */
+	char label[32];         /* human-readable name for logging/debug (service_setlabel) */
+	struct memory_stat stat; /* allocator stats and memory limit for this service's Lua VM */
+	uint64_t cpucost;       /* accumulated CPU time (systime) for this service */
+	uint64_t clock;         /* start of current run slice; cpucost += (now - clock) when done */
 };
 
 struct service_pool {

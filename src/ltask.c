@@ -27,6 +27,7 @@
 #include "systime.h"
 #include "threadsig.h"
 #include "semaphore.h"
+#include "ltask_ext.h"
 
 LUAMOD_API int luaopen_ltask(lua_State *L);
 LUAMOD_API int luaopen_ltask_bootstrap(lua_State *L);
@@ -87,25 +88,25 @@ mainthread_trigger(struct mainthread_session *mt) {
 }
 
 struct ltask {
-	const struct ltask_config *config;
-	struct worker_thread *workers;
-	atomic_int event_init[MAX_SOCKEVENT];
-	struct sockevent event[MAX_SOCKEVENT];
-	struct service_pool *services;
-	struct queue *schedule;
-	struct timer *timer;
+	const struct ltask_config *config;  /* read-only: worker count, max_service, queue size, etc. */
+	struct worker_thread *workers;     /* array of worker threads; length config->worker */
+	atomic_int event_init[MAX_SOCKEVENT]; /* per-slot: 1 if sockevent initialized, 0 otherwise */
+	struct sockevent event[MAX_SOCKEVENT]; /* socket event state; used by sockevent services */
+	struct service_pool *services;     /* all services (root, user, etc.) */
+	struct queue *schedule;            /* queue of service ids ready to run; scheduler pops and assigns to workers */
+	struct timer *timer;               /* global timer for ltask.sleep / timer_add; NULL until init_timer */
 #ifdef DEBUGLOG
-	struct debug_logger *logger;
+	struct debug_logger *logger;       /* debug logger for this task */
 #endif
-	struct logqueue *lqueue;
-	struct queue *external_message;
-	struct message *external_last_message;
-	struct mainthread_session mt;
-	atomic_int schedule_owner;
-	atomic_int active_worker;
-	atomic_int thread_count;
-	int blocked_service;		// binding service may block
-	FILE *logfile;
+	struct logqueue *lqueue;           /* log message queue; services push via ltask.pushlog, main drains it */
+	struct queue *external_message;    /* queue of messages from outside (e.g. external_sender); NULL if disabled */
+	struct message *external_last_message; /* one message that could not be delivered (target blocked); retried next dispatch */
+	struct mainthread_session mt;      /* state for running a service on the main thread (init_root, etc.) */
+	atomic_int schedule_owner;         /* who owns scheduler: THREAD_NONE, THREAD_MAINTHREAD, or THREAD_WORKER(i) */
+	atomic_int active_worker;         /* count of workers currently awake (not in worker_sleep) */
+	atomic_int thread_count;           /* number of worker threads still running; decremented on worker exit */
+	int blocked_service;               /* 1 if a binding service is blocked so workers may sleep; 0 otherwise */
+	FILE *logfile;                     /* output for debug/crash log (DEBUGLOG); NULL or stdout or file */
 };
 
 struct service_ud {
@@ -851,6 +852,8 @@ ltask_init(lua_State *L) {
 	
 	mainthread_init(&task->mt);
 
+	ltask_ext_init(task, task->services);
+
 	return 1;
 }
 
@@ -1262,6 +1265,7 @@ luaopen_ltask_bootstrap(lua_State *L) {
 		{ "unpack", luaseri_unpack },
 		{ "remove", luaseri_remove },
 		{ "unpack_remove", luaseri_unpack_remove },
+		{ "bytes_remove", luaseri_bytes_remove },
 		{ "external_sender", ltask_external_sender },
 		{ "log_sender", ltask_log_sender },
 		{ "mainthread_wait", lmainthread_wait },
@@ -1396,6 +1400,8 @@ lrecv_message(lua_State *L) {
 	lua_pushinteger(L, m->from.id);
 	lua_pushinteger(L, m->session);
 	lua_pushinteger(L, m->type);
+	/* Ownership of m->msg is transferred to Lua. Lua must free it via
+	 * ltask.unpack_remove (unpack then free) or ltask.remove/ltask.bytes_remove (free only). */
 	if (m->msg) {
 		lua_pushlightuserdata(L, m->msg);
 		lua_pushinteger(L, m->sz);
@@ -1743,6 +1749,7 @@ luaopen_ltask(lua_State *L) {
 		{ "unpack", luaseri_unpack },
 		{ "remove", luaseri_remove },
 		{ "unpack_remove", luaseri_unpack_remove },
+		{ "bytes_remove", luaseri_bytes_remove },
 		{ "timer_sleep", ltask_sleep },
 		{ NULL, NULL },
 	};
