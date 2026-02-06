@@ -1,16 +1,24 @@
 ---@diagnostic disable: inject-field, undefined-global
-local moon = require "ltask"
+local ltask = require "ltask"
 ---@type any
 local c = require "rust.sqlx"
+require "util"
 
-print("####### moon", moon)
+local CURRENT_SERVICE <const> = ltask.self()
+local CURRENT_SERVICE_LABEL <const> = ltask.label()
+
+print("####### ltask", ltask)
 print("####### c", c)
+print("########## ltask.next_session()", ltask.next_session())
+print("########## ltask.id", CURRENT_SERVICE)
+print("########## ltask.label", CURRENT_SERVICE_LABEL)
+print("########## print_r", print_r({a = 1, b = 2}, true))
 
-do return end
+-- do return end
 
 local protocol_type = 23
 
-moon.register_protocol {
+ltask.register_protocol {
     name = "database",
     PTYPE = protocol_type,
     pack = function(...) return ... end,
@@ -31,7 +39,7 @@ local M = {}
 ---@param timeout? integer Connection timeout in milliseconds. Default 5000ms
 ---@return SqlX Returns a database connection object
 function M.connect(database_url, name, timeout)
-    local res = moon.wait(c.connect(protocol_type, moon.id, moon.next_sequence(), database_url, name, timeout))
+    local res = ltask.async_wait(c.connect(protocol_type, CURRENT_SERVICE, ltask.next_session(), database_url, name, timeout))
     if res.kind then
         error(string.format("connect database failed: %s", res.message))
     end
@@ -77,9 +85,9 @@ end
 ---@param sql string SQL statement to execute
 ---@vararg any Query parameters for parameter binding (bool, number, string, table as JSON, bytes)
 function M:execute(sql, ...)
-    local res = self.obj:query(moon.id, 0, sql, ...)
+    local res = self.obj:query(CURRENT_SERVICE, 0, sql, ...)
     if type(res) == "table" then
-        moon.error(print_r(res, true))
+        print(print_r(res, true))
     end
 end
 
@@ -96,11 +104,11 @@ end
 ---@vararg any Query parameters for parameter binding
 ---@return table Result rows array or error table with {kind, message}
 function M:query(sql, ...)
-    local session = self.obj:query(moon.id, moon.next_sequence(), sql, ...)
+    local session = self.obj:query(CURRENT_SERVICE, ltask.next_session(), sql, ...)
     if type(session) == "table" then
         return session
     end
-    return moon.wait(session)
+    return ltask.async_wait(session)
 end
 
 --- Execute multiple SQL statements in a transaction
@@ -116,11 +124,11 @@ function M:transaction(querys)
     for _, v in ipairs(querys) do
         trans:push(table.unpack(v))
     end
-    local session = self.obj:transaction(moon.id, moon.next_sequence(), trans)
+    local session = self.obj:transaction(CURRENT_SERVICE, ltask.next_session(), trans)
     if type(session) == "table" then
         return session
     end
-    return moon.wait(session)
+    return ltask.async_wait(session)
 end
 
 --- Execute a transaction without waiting for results (fire-and-forget)
@@ -134,9 +142,9 @@ function M:execute_transaction(querys)
     for _, v in ipairs(querys) do
         trans:push(table.unpack(v))
     end
-    local res = self.obj:transaction(moon.id, 0, trans)
+    local res = self.obj:transaction(CURRENT_SERVICE, 0, trans)
     if type(res) == "table" then
-        moon.error(print_r(res, true))
+        print(print_r(res, true))
     end
 end
 
