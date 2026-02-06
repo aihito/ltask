@@ -490,13 +490,13 @@ end
 function ltask.async_wait(session, err)
 	-- session: int64 (lua number integer) OR false/nil/0 for immediate failure
 	-- err: optional error message if session is false/nil/0
-	ltask.log.info("ltask.async_wait enter", session, err)
+	-- ltask.log.info("ltask.async_wait enter", session, err)
 	if session == false or session == nil or session == 0 then
 		rethrow_error(2, err or "async request failed")
 	end
 	session_coroutine_suspend_lookup[session] = running_thread
 	local msg_type, ret_session, msg, sz = yield_session()
-	ltask.log.info("ltask.async_wait resume", msg_type, ret_session, msg and "userdata" or "nil", sz)
+	-- ltask.log.info("ltask.async_wait resume", msg_type, ret_session, msg and "userdata" or "nil", sz)
 	return decode_by_protocol(msg_type, msg, sz)
 end
 

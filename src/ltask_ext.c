@@ -27,7 +27,7 @@ ltask_ext_init(struct ltask *task, struct service_pool *pool) {
 __attribute__((visibility("default")))
 void
 send_integer_message(uint8_t type_, uint32_t receiver, int64_t session, intptr_t val) {
-	printf("########## send_integer_message %d %d %ld %p\n", type_, receiver, session, (void*)val);
+	// printf("########## send_integer_message %d %d %ld %p\n", type_, receiver, session, (void*)val);
 	(void)type_;
 	(void)g_ltask;	// reserved for future use
 	if (g_service_pool == NULL || session == 0) {
