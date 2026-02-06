@@ -24,6 +24,7 @@
 #include "sysapi.h"
 #include "debuglog.h"
 #include "logqueue.h"
+#include "spinlock.h"
 #include "systime.h"
 #include "threadsig.h"
 #include "semaphore.h"
@@ -101,6 +102,8 @@ struct ltask {
 	struct logqueue *lqueue;           /* log message queue; services push via ltask.pushlog, main drains it */
 	struct queue *external_message;    /* queue of messages from outside (e.g. external_sender); NULL if disabled */
 	struct message *external_last_message; /* one message that could not be delivered (target blocked); retried next dispatch */
+	struct queue *extension_message;   /* messages from extensions (e.g. rust); pushed by ext, drained by ltask thread */
+	struct spinlock extension_message_lock;
 	struct mainthread_session mt;      /* state for running a service on the main thread (init_root, etc.) */
 	atomic_int schedule_owner;         /* who owns scheduler: THREAD_NONE, THREAD_MAINTHREAD, or THREAD_WORKER(i) */
 	atomic_int active_worker;         /* count of workers currently awake (not in worker_sleep) */
@@ -474,6 +477,39 @@ dispatch_external_messages(struct ltask *task) {
 	}
 }
 
+/* Drain extension_message queue (pushed by ltask_ext from other threads); dispatch on ltask thread so SPSC per-service is preserved. */
+static void
+dispatch_extension_messages(struct ltask *task) {
+	if (task->extension_message == NULL)
+		return;
+	for (;;) {
+		struct message *msg = NULL;
+		spinlock_acquire(&task->extension_message_lock);
+		msg = queue_pop_ptr(task->extension_message);
+		spinlock_release(&task->extension_message_lock);
+		if (msg == NULL)
+			break;
+		if (send_external_message(task, msg)) {
+			/* target blocked; push back and retry next dispatch */
+			spinlock_acquire(&task->extension_message_lock);
+			queue_push_ptr(task->extension_message, msg);
+			spinlock_release(&task->extension_message_lock);
+			return;
+		}
+		check_message_to(task, msg->to);
+	}
+}
+
+int
+ltask_push_extension_message(struct ltask *task, struct message *msg) {
+	if (task == NULL || task->extension_message == NULL || msg == NULL)
+		return -1;
+	spinlock_acquire(&task->extension_message_lock);
+	int r = queue_push_ptr(task->extension_message, msg) ? 1 : 0;
+	spinlock_release(&task->extension_message_lock);
+	return r;
+}
+
 static void
 schedule_dispatch(struct ltask *task) {
 	// Step 0 : check mainthread service id
@@ -485,10 +521,11 @@ schedule_dispatch(struct ltask *task) {
 	}
 
 	// Step 1 : dispatch external messages
-
 	if (task->external_message) {
 		dispatch_external_messages(task);
 	}
+	// Step 1b : dispatch extension messages (from rust/C; keeps single writer per service queue)
+	dispatch_extension_messages(task);
 
 	// Step 2 : Collect service_done
 	service_id jobs[MAX_WORKER];
@@ -814,6 +851,11 @@ ltask_init(lua_State *L) {
 	task->timer = NULL;
 	task->external_message = NULL;
 	task->external_last_message = NULL;
+	task->extension_message = queue_new_ptr(config->queue);
+	if (task->extension_message && spinlock_init(&task->extension_message_lock)) {
+		queue_delete(task->extension_message);
+		task->extension_message = NULL;
+	}
 	if (config->external_queue) {
 		task->external_message = queue_new_ptr(config->external_queue);
 	}
@@ -977,6 +1019,16 @@ ltask_wait(lua_State *L) {
 	}
 	message_delete(ctx->task->external_last_message);
 	queue_delete(ctx->task->external_message);
+	if (ctx->task->extension_message) {
+		struct message *m;
+		spinlock_acquire(&ctx->task->extension_message_lock);
+		while ((m = queue_pop_ptr(ctx->task->extension_message)))
+			message_delete(m);
+		spinlock_release(&ctx->task->extension_message_lock);
+		queue_delete(ctx->task->extension_message);
+		spinlock_destroy(&ctx->task->extension_message_lock);
+		ctx->task->extension_message = NULL;
+	}
 	mainthread_deinit(&ctx->task->mt);
 	return 0;
 }
@@ -1126,6 +1178,12 @@ pushlog(struct ltask* task, service_id id, void *data, uint32_t sz) {
 	return logqueue_push(q, &msg);
 }
 
+int
+ltask_extension_pushlog(struct ltask *task, uint32_t sender_id, void *owned_buf, uint32_t sz) {
+	service_id id = { sender_id };
+	return pushlog(task, id, owned_buf, sz);
+}
+
 static int
 ltask_boot_pushlog(lua_State *L) {
 	luaL_checktype(L, 1, LUA_TLIGHTUSERDATA);
@@ -1266,6 +1324,7 @@ luaopen_ltask_bootstrap(lua_State *L) {
 		{ "remove", luaseri_remove },
 		{ "unpack_remove", luaseri_unpack_remove },
 		{ "bytes_remove", luaseri_bytes_remove },
+		{ "unpack_pointer", luaseri_unpack_pointer },
 		{ "external_sender", ltask_external_sender },
 		{ "log_sender", ltask_log_sender },
 		{ "mainthread_wait", lmainthread_wait },
@@ -1750,6 +1809,7 @@ luaopen_ltask(lua_State *L) {
 		{ "remove", luaseri_remove },
 		{ "unpack_remove", luaseri_unpack_remove },
 		{ "bytes_remove", luaseri_bytes_remove },
+		{ "unpack_pointer", luaseri_unpack_pointer },
 		{ "timer_sleep", ltask_sleep },
 		{ NULL, NULL },
 	};

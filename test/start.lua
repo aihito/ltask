@@ -46,15 +46,15 @@ return loadfile(filename)
 		}),
 	}
 
-	original_print()
-	original_print(root_config.initfunc)
-	original_print()
-	original_print(root_config.service_chunkname)
+	-- original_print()
+	-- original_print(root_config.initfunc)
+	-- original_print()
+	-- original_print(root_config.service_chunkname)
 	-- original_print()
 	-- for k, v in pairs(root_config) do
 	-- 	original_print(k, v)
 	-- end
-	original_print()
+	-- original_print()
 	-- do return end
 
 	local bootstrap = dofile(searchpath "bootstrap")

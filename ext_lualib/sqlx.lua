@@ -7,12 +7,11 @@ require "util"
 local CURRENT_SERVICE <const> = ltask.self()
 local CURRENT_SERVICE_LABEL <const> = ltask.label()
 
-print("####### ltask", ltask)
-print("####### c", c)
-print("########## ltask.next_session()", ltask.next_session())
-print("########## ltask.id", CURRENT_SERVICE)
-print("########## ltask.label", CURRENT_SERVICE_LABEL)
-print("########## print_r", print_r({a = 1, b = 2}, true))
+-- print("####### ltask", ltask)
+-- print("####### c", c)
+-- print("########## ltask.next_session()", ltask.next_session())
+-- print("########## ltask.id", CURRENT_SERVICE)
+-- print("########## ltask.label", CURRENT_SERVICE_LABEL)
 
 -- do return end
 
@@ -39,7 +38,10 @@ local M = {}
 ---@param timeout? integer Connection timeout in milliseconds. Default 5000ms
 ---@return SqlX Returns a database connection object
 function M.connect(database_url, name, timeout)
-    local res = ltask.async_wait(c.connect(protocol_type, CURRENT_SERVICE, ltask.next_session(), database_url, name, timeout))
+    local session = ltask.next_session()
+    print("########## M.connect", protocol_type, CURRENT_SERVICE, session, database_url, name, timeout)
+
+    local res = ltask.async_wait(c.connect(protocol_type, CURRENT_SERVICE, session, database_url, name, timeout))
     if res.kind then
         error(string.format("connect database failed: %s", res.message))
     end

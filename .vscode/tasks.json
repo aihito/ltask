@@ -1,0 +1,15 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"type": "shell",
+			"command": "cd /home/game/open-source/game-server/ltask/3rd/lrust && make",
+			"group": "build",
+			"label": "rust: make",
+			"presentation": {
+				"reveal": "always",
+				"focus": true
+			}
+		}
+	]
+}

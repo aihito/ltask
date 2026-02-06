@@ -35,7 +35,12 @@ local function decode_by_protocol(protocol_type, msg, sz)
 		return nil
 	end
 	local handler = protocol_handlers[protocol_type]
-	local decoder = handler.unpack
+	-- 扩展库（Rust）用 send_integer_message 发的是指针：payload 为 sizeof(intptr_t) 的 buffer，需解成 number 再给协议 decoder
+	if type(msg) == "userdata" and (sz == 4 or sz == 8) and handler and handler.unpack then
+		local ptr = ltask.unpack_pointer(msg, sz)
+		return handler.unpack(ptr)
+	end
+	local decoder = handler and handler.unpack
 	if decoder then
 		return decoder(msg)
 	end
@@ -485,13 +490,13 @@ end
 function ltask.async_wait(session, err)
 	-- session: int64 (lua number integer) OR false/nil/0 for immediate failure
 	-- err: optional error message if session is false/nil/0
-	print("########## ltask.async_wait", session, err)
+	ltask.log.info("ltask.async_wait enter", session, err)
 	if session == false or session == nil or session == 0 then
 		rethrow_error(2, err or "async request failed")
 	end
 	session_coroutine_suspend_lookup[session] = running_thread
 	local msg_type, ret_session, msg, sz = yield_session()
-	print("########## ltask.async_wait", msg_type, ret_session, msg, sz)
+	ltask.log.info("ltask.async_wait resume", msg_type, ret_session, msg and "userdata" or "nil", sz)
 	return decode_by_protocol(msg_type, msg, sz)
 end
 
@@ -764,7 +769,7 @@ function ltask.dispatch(handler)
 			if type(v) == "function" then
 				assert(service[k] == nil)
 				service[k] = v
-				ltask.log.info(string.format("[%s] [%d] register handler: %s", CURRENT_SERVICE_LABEL, CURRENT_SERVICE, k))
+				-- ltask.log.info(string.format("[%s] [%d] register handler: %s", CURRENT_SERVICE_LABEL, CURRENT_SERVICE, k))
 			end
 		end
 	end

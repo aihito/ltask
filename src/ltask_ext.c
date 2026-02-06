@@ -4,6 +4,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
 
 // Global ltask pointer for extension layer (future-proofing).
 // Set once during ltask_init.
@@ -26,6 +27,7 @@ ltask_ext_init(struct ltask *task, struct service_pool *pool) {
 __attribute__((visibility("default")))
 void
 send_integer_message(uint8_t type_, uint32_t receiver, int64_t session, intptr_t val) {
+	printf("########## send_integer_message %d %d %ld %p\n", type_, receiver, session, (void*)val);
 	(void)type_;
 	(void)g_ltask;	// reserved for future use
 	if (g_service_pool == NULL || session == 0) {
@@ -46,7 +48,7 @@ send_integer_message(uint8_t type_, uint32_t receiver, int64_t session, intptr_t
 		.from = {0},
 		.to = to,
 		.session = sess,
-		.type = MESSAGE_RESPONSE,
+		.type = type_,
 		.msg = msg_buf,
 		.sz = sizeof(intptr_t)
 	};
@@ -56,8 +58,7 @@ send_integer_message(uint8_t type_, uint32_t receiver, int64_t session, intptr_t
 		free(msg_buf);
 		return;
 	}
-
-	service_push_message(g_service_pool, to, m);
+	ltask_push_extension_message(g_ltask, m);
 }
 
 // send_message: Moon-style function for sending byte data
@@ -94,7 +95,18 @@ send_message(uint8_t type_, uint32_t receiver, int64_t session, const char *data
 		free(msg_buf);
 		return;
 	}
-
-	service_push_message(g_service_pool, to, m);
+	ltask_push_extension_message(g_ltask, m);
 }
 
+__attribute__((visibility("default")))
+void
+ltask_push_log(uint32_t sender_id, const char *data, size_t len) {
+	if (g_ltask == NULL || data == NULL || len == 0)
+		return;
+	void *buf = malloc(len);
+	if (buf == NULL)
+		return;
+	memcpy(buf, data, len);
+	if (ltask_extension_pushlog(g_ltask, sender_id, buf, (uint32_t)len) != 0)
+		free(buf);
+}

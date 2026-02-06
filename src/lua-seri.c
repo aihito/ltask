@@ -937,6 +937,22 @@ luaseri_bytes_remove(lua_State *L) {
 	return 1;
 }
 
+int
+luaseri_unpack_pointer(lua_State *L) {
+	if (lua_isnoneornil(L, 1))
+		return 0;
+	luaL_checktype(L, 1, LUA_TLIGHTUSERDATA);
+	void *data = lua_touserdata(L, 1);
+	size_t sz = (size_t)luaL_checkinteger(L, 2);
+	if (sz != sizeof(intptr_t))
+		return luaL_error(L, "bad size for pointer message (expected %zu)", sizeof(intptr_t));
+	intptr_t val;
+	memcpy(&val, data, sizeof(intptr_t));
+	free(data);
+	lua_pushinteger(L, (lua_Integer)val);
+	return 1;
+}
+
 #ifdef TEST_SERI
 
 LUAMOD_API int
