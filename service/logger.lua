@@ -14,8 +14,15 @@ local function writelog()
 		end
 		local tsec = ti // 100
 		local msec = ti % 100
-		local level, message = ltask.unpack_remove(msg, sz)
-		io.write(string.format("[%s.%02d][%-5s]%s\n", os.date("%Y-%m-%d %H:%M:%S", tsec), msec, level:upper(), message))
+		local ok, level, message = pcall(ltask.unpack_remove, msg, sz)
+		if ok and level and message then
+			io.write(string.format("[%s.%02d][%-5s]%s\n", os.date("%Y-%m-%d %H:%M:%S", tsec), msec, level:upper(), message))
+		else
+			if not ok then
+				ltask.remove(msg, sz)
+				io.write(string.format("[%s.%02d][?????] malformed log (sz=%d)\n", os.date("%Y-%m-%d %H:%M:%S", tsec), msec, sz))
+			end
+		end
 		flush = true
 	end
 end
