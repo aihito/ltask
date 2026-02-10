@@ -106,7 +106,7 @@ struct ltask {
 	struct spinlock extension_message_lock;
 	struct mainthread_session mt;      /* state for running a service on the main thread (init_root, etc.) */
 	atomic_int schedule_owner;         /* who owns scheduler: THREAD_NONE, THREAD_MAINTHREAD, or THREAD_WORKER(i) */
-	atomic_int active_worker;         /* count of workers currently awake (not in worker_sleep) */
+	atomic_int active_worker;          /* count of workers currently awake (not in worker_sleep) */
 	atomic_int thread_count;           /* number of worker threads still running; decremented on worker exit */
 	int blocked_service;               /* 1 if a binding service is blocked so workers may sleep; 0 otherwise */
 	FILE *logfile;                     /* output for debug/crash log (DEBUGLOG); NULL or stdout or file */
@@ -477,9 +477,8 @@ dispatch_external_messages(struct ltask *task) {
 	}
 }
 
-/* Drain extension_message queue (pushed by ltask_ext from other threads); dispatch on ltask thread so SPSC per-service is preserved. */
 static void
-dispatch_extension_messages(struct ltask *task) {
+dispatch_extension_messages(struct ltask *task) { /* Drain extension_message queue (pushed by ltask_ext from other threads); dispatch on ltask thread so SPSC per-service is preserved. */
 	if (task->extension_message == NULL)
 		return;
 	for (;;) {
