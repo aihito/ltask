@@ -740,7 +740,7 @@ crash_log_worker(int sig, void *ud)
 }
 
 static void
-crash_log_default(int sig, void *ud)
+crash_log_default(int sig, void *ud) // ud: user data
 {
     const char *filename = (const char *)ud;
 #if defined(_MSC_VER)

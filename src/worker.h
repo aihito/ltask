@@ -27,19 +27,19 @@ struct worker_thread
 #ifdef DEBUGLOG
     struct debug_logger *logger;
 #endif
-    int worker_id;
-    service_id running;
-    service_id binding;
-    service_id waiting;
-    atomic_int service_ready;
-    atomic_int service_done;
-    int term_signal;
-    int sleeping;
-    int wakeup;
-    int busy;
-    struct cond trigger;
-    struct binding_service binding_queue;
-    uint64_t schedule_time;
+    int worker_id;                        /* this worker's index (0 .. worker_n-1) */
+    service_id running;                   /* service currently executing on this worker */
+    service_id binding;                   /* binding service assigned to this worker (0 if none) */
+    service_id waiting;                   /* service waiting for 'running' to unblock (e.g. sockevent) */
+    atomic_int service_ready;             /* 1 when a new job is ready for this worker (e.g. from binding_queue) */
+    atomic_int service_done;              /* 1 when running service has finished its slice */
+    int term_signal;                      /* request worker to exit */
+    int sleeping;                         /* 1 if worker is in worker_sleep (cond wait) */
+    int wakeup;                           /* 1 to wake worker from sleep */
+    int busy;                             /* 1 if worker is busy (has running or binding job) */
+    struct cond trigger;                  /* condition variable: wake worker for new job or exit */
+    struct binding_service binding_queue; /* queue of binding services to run */
+    uint64_t schedule_time;               /* used by TIMELOG for scheduler hold duration */
 };
 
 static inline void

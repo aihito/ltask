@@ -1,5 +1,6 @@
 CFLAGS=-g -Wall
 # CFLAGS+=-DDEBUGLOG
+CFLAGS+=-DDEBUGTHREADNAME
 
 LUAINC?=`pkgconf lua --cflags`
 
@@ -8,6 +9,10 @@ ifeq ($(UNAME), Linux)
   SHARED=--shared -fPIC
   SO=so
   LIBS=-lpthread
+  # pthread_setname_np is a GNU extension; need _GNU_SOURCE when using DEBUGTHREADNAME
+  ifneq ($(findstring DEBUGTHREADNAME,$(CFLAGS)),)
+    CFLAGS+=-D_GNU_SOURCE
+  endif
 else ifeq ($(UNAME), Darwin)
   SO=so
   SHARED= -fPIC -dynamiclib -Wl,-undefined,dynamic_lookup

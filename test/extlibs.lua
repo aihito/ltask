@@ -111,3 +111,7 @@ print("  remaining test rows:", tbl and #tbl or 0)
 db:close()
 print("extlibs done")
 ltask.quit()
+
+-- while true do
+-- 	ltask.sleep(1)
+-- end
