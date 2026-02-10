@@ -9,13 +9,14 @@
 #define MAX_WORKER 256
 #define MAX_SOCKEVENT 16
 
-struct ltask_config {
-	int worker;
-	int queue;
-	int queue_sending;
-	int max_service;
-	int external_queue;
-	char crashlog[128];
+struct ltask_config
+{
+    int worker;
+    int queue;
+    int queue_sending;
+    int max_service;
+    int external_queue;
+    char crashlog[128];
 };
 
 void config_load(lua_State *L, int index, struct ltask_config *config);

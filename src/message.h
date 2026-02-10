@@ -24,17 +24,17 @@ typedef unsigned int session_t;
 #define MESSAGE_SCHEDULE_NEW 0
 #define MESSAGE_SCHEDULE_DEL 1
 
-struct message {
-	service_id from;
-	service_id to;
-	session_t session;
-	int type;
-	void *msg;
-	size_t sz;
+struct message
+{
+    service_id from;
+    service_id to;
+    session_t session;
+    int type;
+    void *msg;
+    size_t sz;
 };
 
-struct message * message_new(struct message *msg);
+struct message *message_new(struct message *msg);
 void message_delete(struct message *msg);
-
 
 #endif

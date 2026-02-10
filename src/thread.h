@@ -1,14 +1,15 @@
 #ifndef ltask_thread_h
 #define ltask_thread_h
 
-struct thread {
-	void (*func)(void *);
-	void *ud;
+struct thread
+{
+    void (*func)(void *);
+    void *ud;
 };
 
-static void* thread_start(struct thread * threads, int n, int usemainthread);
+static void *thread_start(struct thread *threads, int n, int usemainthread);
 static void thread_join(void *handle, int n);
-static void * thread_run(struct thread thread);
+static void *thread_run(struct thread thread);
 static void thread_wait(void *pid);
 
 #if defined(_MSC_VER) || defined(__MINGW32__) || defined(__MINGW64__)
@@ -17,34 +18,37 @@ static void thread_wait(void *pid);
 
 #if defined(DEBUGTHREADNAME)
 
-static void inline
-thread_setname(const char* name) {
-	typedef HRESULT (WINAPI *SetThreadDescriptionProc)(HANDLE, PCWSTR);
-	SetThreadDescriptionProc SetThreadDescription = (SetThreadDescriptionProc)GetProcAddress(GetModuleHandleW(L"kernel32.dll"), "SetThreadDescription");
-	if (SetThreadDescription) {
-		size_t size = (strlen(name)+1) * sizeof(wchar_t);
-		wchar_t* wname = (wchar_t*)_alloca(size);
-		mbstowcs(wname, name, size-2);
-		SetThreadDescription(GetCurrentThread(), wname);
-	}
+static void inline thread_setname(const char *name)
+{
+    typedef HRESULT(WINAPI * SetThreadDescriptionProc)(HANDLE, PCWSTR);
+    SetThreadDescriptionProc SetThreadDescription = (SetThreadDescriptionProc)GetProcAddress(GetModuleHandleW(L"kernel32.dll"), "SetThreadDescription");
+    if (SetThreadDescription) {
+        size_t size = (strlen(name) + 1) * sizeof(wchar_t);
+        wchar_t *wname = (wchar_t *)_alloca(size);
+        mbstowcs(wname, name, size - 2);
+        SetThreadDescription(GetCurrentThread(), wname);
+    }
 #if defined(_MSC_VER)
-	const DWORD MS_VC_EXCEPTION = 0x406D1388;
+    const DWORD MS_VC_EXCEPTION = 0x406D1388;
 #pragma pack(push, 8)
-	struct ThreadNameInfo {
-		DWORD  type;
-		LPCSTR name;
-		DWORD  id;
-		DWORD  flags;
-	};
+    struct ThreadNameInfo
+    {
+        DWORD type;
+        LPCSTR name;
+        DWORD id;
+        DWORD flags;
+    };
 #pragma pack(pop)
-	struct ThreadNameInfo info;
-	info.type  = 0x1000;
-	info.name  = name;
-	info.id    = GetCurrentThreadId();
-	info.flags = 0;
-	__try {
-		RaiseException(MS_VC_EXCEPTION, 0, sizeof(info)/sizeof(ULONG_PTR), (ULONG_PTR*)&info);
-	} __except(EXCEPTION_EXECUTE_HANDLER) {}
+    struct ThreadNameInfo info;
+    info.type = 0x1000;
+    info.name = name;
+    info.id = GetCurrentThreadId();
+    info.flags = 0;
+    __try {
+        RaiseException(MS_VC_EXCEPTION, 0, sizeof(info) / sizeof(ULONG_PTR), (ULONG_PTR *)&info);
+    }
+    __except (EXCEPTION_EXECUTE_HANDLER) {
+    }
 #endif
 }
 
@@ -55,66 +59,72 @@ thread_setname(const char* name) {
 #endif
 
 static DWORD inline WINAPI
-thread_function(LPVOID lpParam) {
-	struct thread * t = (struct thread *)lpParam;
-	t->func(t->ud);
-	return 0;
+thread_function(LPVOID lpParam)
+{
+    struct thread *t = (struct thread *)lpParam;
+    t->func(t->ud);
+    return 0;
 }
 
 static inline void *
-thread_start(struct thread * threads, int n, int usemainthread) {
-	int i;
-	struct thread *mainthread = &threads[0];	// Use main thread for the 1st thread
-	if (usemainthread) {
-		++threads;
-	}
-	HANDLE *thread_handle = (HANDLE *)HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,n*sizeof(HANDLE));
-	for (i=0;i<n;i++) {
-		thread_handle[i] = CreateThread(NULL, 0, thread_function, (LPVOID)&threads[i], 0, NULL);
-		if (thread_handle[i] == NULL) {
-			HeapFree(GetProcessHeap(), 0, thread_handle);
-			return NULL;
-		}
-	}
-	if (usemainthread)
-		mainthread->func(mainthread->ud);
-	return (void *)thread_handle;
+thread_start(struct thread *threads, int n, int usemainthread)
+{
+    int i;
+    struct thread *mainthread = &threads[0]; // Use main thread for the 1st thread
+    if (usemainthread) {
+        ++threads;
+    }
+    HANDLE *thread_handle = (HANDLE *)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, n * sizeof(HANDLE));
+    for (i = 0; i < n; i++) {
+        thread_handle[i] = CreateThread(NULL, 0, thread_function, (LPVOID)&threads[i], 0, NULL);
+        if (thread_handle[i] == NULL) {
+            HeapFree(GetProcessHeap(), 0, thread_handle);
+            return NULL;
+        }
+    }
+    if (usemainthread)
+        mainthread->func(mainthread->ud);
+    return (void *)thread_handle;
 }
 
 static inline void
-thread_join(void *handle, int n) {
-	HANDLE *thread_handle = (HANDLE *)handle;
-	WaitForMultipleObjects(n, thread_handle, TRUE, INFINITE);
-	int i;
-	for (i=0;i<n;i++) {
-		CloseHandle(thread_handle[i]);
-	}
-	HeapFree(GetProcessHeap(), 0, thread_handle);
+thread_join(void *handle, int n)
+{
+    HANDLE *thread_handle = (HANDLE *)handle;
+    WaitForMultipleObjects(n, thread_handle, TRUE, INFINITE);
+    int i;
+    for (i = 0; i < n; i++) {
+        CloseHandle(thread_handle[i]);
+    }
+    HeapFree(GetProcessHeap(), 0, thread_handle);
 }
 
 static DWORD inline WINAPI
-thread_function_run(LPVOID lpParam) {
-	struct thread * t = (struct thread *)lpParam;
-	t->func(t->ud);
-	HeapFree(GetProcessHeap(), 0, t);
-	return 0;
+thread_function_run(LPVOID lpParam)
+{
+    struct thread *t = (struct thread *)lpParam;
+    t->func(t->ud);
+    HeapFree(GetProcessHeap(), 0, t);
+    return 0;
 }
 
 static inline void *
-thread_run(struct thread thread) {
-	struct thread * t = (struct thread *)HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY, sizeof(*t));
-	*t = thread;
-	HANDLE h = CreateThread(NULL, 0, thread_function_run, (LPVOID)t, 0, NULL);
-	if (h == NULL) {
-		HeapFree(GetProcessHeap(), 0, t);
-	}
-	return (void *)h;
+thread_run(struct thread thread)
+{
+    struct thread *t = (struct thread *)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*t));
+    *t = thread;
+    HANDLE h = CreateThread(NULL, 0, thread_function_run, (LPVOID)t, 0, NULL);
+    if (h == NULL) {
+        HeapFree(GetProcessHeap(), 0, t);
+    }
+    return (void *)h;
 }
 
 static inline void
-thread_wait(void *pid) {
-	HANDLE h = (HANDLE)pid;
-	WaitForSingleObject(h, INFINITE);
+thread_wait(void *pid)
+{
+    HANDLE h = (HANDLE)pid;
+    WaitForSingleObject(h, INFINITE);
 }
 
 #else
@@ -125,30 +135,30 @@ thread_wait(void *pid) {
 #if defined(DEBUGTHREADNAME)
 
 #if defined(__linux__)
-#	define LTASK_GLIBC (__GLIBC__ * 100 + __GLIBC_MINOR__)
-#	if LTASK_GLIBC < 212
-#		include <sys/prctl.h>
-#	endif
+#define LTASK_GLIBC (__GLIBC__ * 100 + __GLIBC_MINOR__)
+#if LTASK_GLIBC < 212
+#include <sys/prctl.h>
+#endif
 #endif
 
 #if defined(__FreeBSD__) || defined(__OpenBSD__)
-#	include <pthread_np.h>
+#include <pthread_np.h>
 #endif
 
-static void inline
-thread_setname(const char* name) {
+static void inline thread_setname(const char *name)
+{
 #if defined(__APPLE__)
-	pthread_setname_np(name);
+    pthread_setname_np(name);
 #elif defined(__linux__)
-#	if LTASK_GLIBC >= 212
-		pthread_setname_np(pthread_self(), name);
-#	else
-		prctl(PR_SET_NAME, name, 0, 0, 0);
-#	endif
+#if LTASK_GLIBC >= 212
+    pthread_setname_np(pthread_self(), name);
+#else
+    prctl(PR_SET_NAME, name, 0, 0, 0);
+#endif
 #elif defined(__NetBSD__)
-	pthread_setname_np(pthread_self(), "%s", (void*)name);
+    pthread_setname_np(pthread_self(), "%s", (void *)name);
 #elif defined(__FreeBSD__) || defined(__OpenBSD__)
-	pthread_set_name_np(pthread_self(), name);
+    pthread_set_name_np(pthread_self(), name);
 #endif
 }
 
@@ -159,79 +169,85 @@ thread_setname(const char* name) {
 #endif
 
 static inline void *
-thread_function(void * args) {
-	struct thread * t = (struct thread *)args;
-	t->func(t->ud);
-	return NULL;
+thread_function(void *args)
+{
+    struct thread *t = (struct thread *)args;
+    t->func(t->ud);
+    return NULL;
 }
 
 static inline void *
-thread_start(struct thread *threads, int n, int usemainthread) {
-	struct thread *mainthread = &threads[0];	// Use main thread for the 1st thread
-	if (usemainthread) {
-		++threads;
-	}
-	pthread_t *pid = (pthread_t *)malloc(n * sizeof(pthread_t));
-	int i;
-	for (i=0;i<n;i++) {
-		if (pthread_create(&pid[i], NULL, thread_function, &threads[i])) {
-			free(pid);
-			return NULL;
-		}
-	}
-	if (usemainthread)
-		mainthread->func(mainthread->ud);
+thread_start(struct thread *threads, int n, int usemainthread)
+{
+    struct thread *mainthread = &threads[0]; // Use main thread for the 1st thread
+    if (usemainthread) {
+        ++threads;
+    }
+    pthread_t *pid = (pthread_t *)malloc(n * sizeof(pthread_t));
+    int i;
+    for (i = 0; i < n; i++) {
+        if (pthread_create(&pid[i], NULL, thread_function, &threads[i])) {
+            free(pid);
+            return NULL;
+        }
+    }
+    if (usemainthread)
+        mainthread->func(mainthread->ud);
 
-	return pid;
+    return pid;
 }
 
 static inline void
-thread_join(void *handle, int n) {
-	pthread_t *pid = (pthread_t *)handle;
-	int i;
-	for (i=0;i<n;i++) {
-		pthread_join(pid[i], NULL); 
-	}
-	free(handle);
+thread_join(void *handle, int n)
+{
+    pthread_t *pid = (pthread_t *)handle;
+    int i;
+    for (i = 0; i < n; i++) {
+        pthread_join(pid[i], NULL);
+    }
+    free(handle);
 }
 
 static inline void *
-thread_function_run(void * args) {
-	struct thread * t = (struct thread *)args;
-	t->func(t->ud);
-	free(t);
-	return NULL;
+thread_function_run(void *args)
+{
+    struct thread *t = (struct thread *)args;
+    t->func(t->ud);
+    free(t);
+    return NULL;
 }
 
 static inline void *
-thread_run(struct thread thread) {
-	pthread_t pid;
-	struct thread *h = (struct thread *)malloc(sizeof(*h));
-	*h = thread;
-	if (pthread_create(&pid, NULL, thread_function_run, h)) {
-		free(h);
-		return NULL;
-	}
-	return (void *)pid;
+thread_run(struct thread thread)
+{
+    pthread_t pid;
+    struct thread *h = (struct thread *)malloc(sizeof(*h));
+    *h = thread;
+    if (pthread_create(&pid, NULL, thread_function_run, h)) {
+        free(h);
+        return NULL;
+    }
+    return (void *)pid;
 }
 
 static inline void
-thread_wait(void *p) {
-	pthread_t pid = (pthread_t)p;
-	pthread_join(pid, NULL);
+thread_wait(void *p)
+{
+    pthread_t pid = (pthread_t)p;
+    pthread_join(pid, NULL);
 }
 
 #endif
 
 #if defined(DEBUGTHREADNAME)
-static void inline
-thread_setnamef(const char* fmt, ...) {
-	char buf[256];
-	va_list ap;
-	va_start(ap, fmt);
-	vsnprintf(buf, sizeof(buf), fmt, ap);
-	va_end(ap);
-	thread_setname(buf);
+static void inline thread_setnamef(const char *fmt, ...)
+{
+    char buf[256];
+    va_list ap;
+    va_start(ap, fmt);
+    vsnprintf(buf, sizeof(buf), fmt, ap);
+    va_end(ap);
+    thread_setname(buf);
 }
 #else
 #define thread_setnamef(...)

@@ -5,7 +5,7 @@
 
 struct debug_logger;
 
-struct debug_logger * dlog_new(const char *name, int id);
+struct debug_logger *dlog_new(const char *name, int id);
 void dlog_flush(struct debug_logger *log);
 void dlog_write(struct debug_logger *log, const char *fmt, ...);
 void dlog_writefile(FILE *f);

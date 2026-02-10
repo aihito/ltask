@@ -13,6 +13,6 @@ int luaseri_remove(lua_State *L);
 int luaseri_bytes_remove(lua_State *L);
 int luaseri_unpack_pointer(lua_State *L);
 
-void * seri_packstring(const char * str, int sz, void *p, size_t *output_sz);
+void *seri_packstring(const char *str, int sz, void *p, size_t *output_sz);
 
 #endif

@@ -6,10 +6,10 @@ Language: Cpp
 BasedOnStyle: Google
 
 # Indentation
-IndentWidth: 2
-TabWidth: 2
+IndentWidth: 4
+TabWidth: 4
 UseTab: Never
-ContinuationIndentWidth: 2
+ContinuationIndentWidth: 4
 IndentCaseLabels: true
 IndentGotoLabels: true
 IndentPPDirectives: None
@@ -78,7 +78,7 @@ FixNamespaceComments: true
 # Formatting
 CompactNamespaces: false
 PackConstructorInitializers: Never
-ConstructorInitializerIndentWidth: 2
+ConstructorInitializerIndentWidth: 4
 DeriveLineEnding: true
 DerivePointerAlignment: true
 DisableFormat: false
@@ -90,7 +90,7 @@ IndentExternBlock: AfterExternBlock
 IndentRequires: false
 
 # Penalties
-PenaltyBreakAssignment: 2
+PenaltyBreakAssignment: 4
 PenaltyBreakBeforeFirstCallParameter: 1
 PenaltyBreakComment: 300
 PenaltyBreakFirstLessLess: 240
@@ -176,7 +176,7 @@ BinPackParameters: false
 # Access modifiers
 EmptyLineAfterAccessModifier: Never
 EmptyLineBeforeAccessModifier: Never
-AccessModifierOffset: -2
+AccessModifierOffset: -4
 
 # Indent access modifiers
 IndentAccessModifiers: false

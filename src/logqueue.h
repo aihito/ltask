@@ -7,14 +7,15 @@
 
 struct logqueue;
 
-struct logmessage {
-	uint64_t timestamp;
-	service_id id;
-	uint32_t sz;
-	void *msg;
+struct logmessage
+{
+    uint64_t timestamp;
+    service_id id;
+    uint32_t sz;
+    void *msg;
 };
 
-struct logqueue * logqueue_new();
+struct logqueue *logqueue_new();
 void logqueue_delete(struct logqueue *);
 // 0 : succ
 int logqueue_push(struct logqueue *q, struct logmessage *m);

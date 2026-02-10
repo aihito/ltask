@@ -5,69 +5,81 @@
 
 #include <windows.h>
 
-struct spinlock {
-	SRWLOCK lock;
+struct spinlock
+{
+    SRWLOCK lock;
 };
 
 static inline int
-spinlock_init(struct spinlock *sp) {
-	InitializeSRWLock(&sp->lock);
-	return 0;
+spinlock_init(struct spinlock *sp)
+{
+    InitializeSRWLock(&sp->lock);
+    return 0;
 }
 
 static inline int
-spinlock_destroy(struct spinlock *sp) {
-	return 0;
+spinlock_destroy(struct spinlock *sp)
+{
+    return 0;
 }
 
 static inline int
-spinlock_acquire(struct spinlock *sp) {
-	AcquireSRWLockExclusive(&sp->lock);
-	return 0;
+spinlock_acquire(struct spinlock *sp)
+{
+    AcquireSRWLockExclusive(&sp->lock);
+    return 0;
 }
 
 static inline int
-spinlock_release(struct spinlock *sp) {
-	ReleaseSRWLockExclusive(&sp->lock);
-	return 0;
+spinlock_release(struct spinlock *sp)
+{
+    ReleaseSRWLockExclusive(&sp->lock);
+    return 0;
 }
 
 static inline int
-spinlock_try(struct spinlock *sp) {
-	return !TryAcquireSRWLockExclusive(&sp->lock);
+spinlock_try(struct spinlock *sp)
+{
+    return !TryAcquireSRWLockExclusive(&sp->lock);
 }
 
 #else
 
 #include <pthread.h>
 
-struct spinlock {
-	pthread_mutex_t mutex;
+struct spinlock
+{
+    pthread_mutex_t mutex;
 };
 
 static inline int
-spinlock_init(struct spinlock *lock) {
-	return pthread_mutex_init(&lock->mutex, NULL);
+spinlock_init(struct spinlock *lock)
+{
+    return pthread_mutex_init(&lock->mutex, NULL);
 }
 
 static inline int
-spinlock_destroy(struct spinlock *lock) {
-	return pthread_mutex_destroy(&lock->mutex);
+spinlock_destroy(struct spinlock *lock)
+{
+    return pthread_mutex_destroy(&lock->mutex);
 }
 
 static inline int
-spinlock_acquire(struct spinlock *lock) {
-	return pthread_mutex_lock(&lock->mutex);
+spinlock_acquire(struct spinlock *lock)
+{
+    return pthread_mutex_lock(&lock->mutex);
 }
 
 static inline int
-spinlock_release(struct spinlock *lock) {
-	return pthread_mutex_unlock(&lock->mutex);
+spinlock_release(struct spinlock *lock)
+{
+    return pthread_mutex_unlock(&lock->mutex);
 }
 
 static inline int
-spinlock_try(struct spinlock *lock) {
-	return pthread_mutex_trylock(&lock->mutex);
+spinlock_try(struct spinlock *lock)
+{
+    return pthread_mutex_trylock(&lock->mutex);
 }
 
 #endif
